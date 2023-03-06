@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/xo/dburl"
 )
 
 type User struct {
@@ -61,4 +65,17 @@ func CreateToken(user User) (string, error) {
 	tokenString, err := token.SignedString([]byte(secret))
 
 	return tokenString, err
+}
+
+func DbConnect() (*sql.DB, error) {
+	databaseUrl, isSetDatabaseUrl := os.LookupEnv("DATABASE_URL")
+
+	if !isSetDatabaseUrl {
+		log.Fatal("DATABASE_URL not defined.")
+		return nil, nil
+	}
+
+	db, connectionError := dburl.Open(strings.TrimSuffix(databaseUrl, "?ssl-mode=REQUIRED"))
+
+	return db, connectionError
 }
