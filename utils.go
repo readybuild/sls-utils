@@ -79,3 +79,30 @@ func DbConnect() (*sql.DB, error) {
 
 	return db, connectionError
 }
+
+// Authorize accepts an args map which should include __ow_headers which is a map containing
+// an authorization header.  This header is then extracted and ran through ParseToken and ValidateToken
+// to determine if the token is authorized
+func Authorize(args map[string]interface{}) (User, bool) {
+	headers := args["__ow_headers"].(map[string]interface{})
+
+	authorizationHeader := headers["authorization"].(string)
+
+	if len(authorizationHeader) == 0 {
+		return User{}, false
+	}
+
+	token, tokenParseError := ParseToken(authorizationHeader)
+
+	if tokenParseError != nil {
+		return User{}, false
+	}
+
+	user, ok := ValidateToken(token)
+
+	if ok && token.Valid {
+		return user, ok
+	}
+
+	return User{}, false
+}
